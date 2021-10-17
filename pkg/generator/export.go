@@ -17,7 +17,7 @@ func (g *Generator) Export() error {
 	}
 	t := template.Must(template.New("tfSchemasTemplate").Parse(tfSchemasTemplate))
 	var buffer bytes.Buffer
-	final := tfSchemas{Schemas: strings.Join(entries, "\n")}
+	final := tfSchemas{Schemas: strings.Join(entries, "\n"), Package: g.outputPackage}
 	if err := t.Execute(&buffer, final); err != nil {
 		panic(err)
 	}

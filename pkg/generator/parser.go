@@ -11,9 +11,10 @@ import (
 )
 
 type Generator struct {
-	input   string
-	output  string
-	schemas map[string]map[string]*schema.Schema
+	input         string
+	output        string
+	outputPackage string
+	schemas       map[string]map[string]*schema.Schema
 }
 
 type SchemaDefinition struct {
@@ -23,8 +24,8 @@ type SchemaDefinition struct {
 
 var tfValueTypeRegex = regexp.MustCompile(`schema.ValueType\((.*)\)`)
 
-func New(input, output string) *Generator {
-	return &Generator{schemas: make(map[string]map[string]*schema.Schema), input: input, output: output}
+func New(input, output, outputPackage string) *Generator {
+	return &Generator{schemas: make(map[string]map[string]*schema.Schema), input: input, output: output, outputPackage: outputPackage}
 }
 func (g *Generator) Parse() error {
 	definitions, err := g.getDefinitions()

@@ -1,13 +1,13 @@
 package cmd
 
 import (
-	"fmt"
-	"github.com/emilgelman/terraform-schema-gen/pkg/generator"
 	"github.com/spf13/cobra"
+
+	"github.com/emilgelman/terraform-schema-gen/pkg/generator"
 )
 
 var (
-	input, output string
+	input, output, outputPackage string
 )
 
 var genCmd = &cobra.Command{
@@ -16,8 +16,7 @@ var genCmd = &cobra.Command{
 	Long:  `gen`,
 	Run:   nil,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println(input, output)
-		g := generator.New(input, output)
+		g := generator.New(input, output, outputPackage)
 		if err := g.Parse(); err != nil {
 			return err
 		}
@@ -33,5 +32,7 @@ func init() {
 	genCmd.MarkFlagRequired("input")
 	genCmd.Flags().StringVarP(&output, "output", "o", "", "output file")
 	genCmd.MarkFlagRequired("output")
+	genCmd.Flags().StringVarP(&outputPackage, "package", "p", "", "output package")
+	genCmd.MarkFlagRequired("package")
 	rootCmd.AddCommand(genCmd)
 }

@@ -9,3 +9,4 @@
 *.iml
 .go-get.log
 .lint.xml
+test/output/
