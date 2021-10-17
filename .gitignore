@@ -5,7 +5,7 @@
 .tools/
 .testCoverage.txt
 .integTestCoverage.txt
-.idea
+.idea/
 *.iml
 .go-get.log
 .lint.xml
