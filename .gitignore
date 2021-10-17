@@ -1,0 +1,11 @@
+.vscode/
+*.pb.go
+*.so
+.tmp/
+.tools/
+.testCoverage.txt
+.integTestCoverage.txt
+.idea
+*.iml
+.go-get.log
+.lint.xml

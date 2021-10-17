@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/emilgelman/terraform-schema-gen/parser"
+	"github.com/emilgelman/terraform-schema-gen/pkg/generator"
 	"github.com/spf13/cobra"
 )
 
@@ -17,9 +17,13 @@ var genCmd = &cobra.Command{
 	Run:   nil,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println(input, output)
-		p := parser.New(input, output)
-		p.Parse()
-		p.Export()
+		g := generator.New(input, output)
+		if err := g.Parse(); err != nil {
+			return err
+		}
+		if err := g.Export(); err != nil {
+			return err
+		}
 		return nil
 	},
 }
