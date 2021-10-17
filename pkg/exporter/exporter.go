@@ -1,8 +1,9 @@
-package generator
+package exporter
 
 import (
 	"bytes"
 	"io/ioutil"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -10,14 +11,21 @@ import (
 	"github.com/hexops/valast"
 )
 
-func (g *Generator) Export() error {
-	entries, err := g.createTerraformSchemaEntries()
+var tfValueTypeRegex = regexp.MustCompile(`schema.ValueType\((.*)\)`)
+
+type Exporter struct {
+	output        string
+	outputPackage string
+}
+
+func (e *Exporter) Export(schemas map[string]map[string]*schema.Schema) error {
+	entries, err := e.createTerraformSchemaEntries(schemas)
 	if err != nil {
 		return err
 	}
 	t := template.Must(template.New("tfSchemasTemplate").Parse(tfSchemasTemplate))
 	var buffer bytes.Buffer
-	final := tfSchemas{Schemas: strings.Join(entries, "\n"), Package: g.outputPackage}
+	final := tfSchemas{Schemas: strings.Join(entries, "\n"), Package: e.outputPackage}
 	if err := t.Execute(&buffer, final); err != nil {
 		panic(err)
 	}
@@ -25,18 +33,18 @@ func (g *Generator) Export() error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(g.output, file, 0600)
+	err = ioutil.WriteFile(e.output, file, 0600)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (g *Generator) createTerraformSchemaEntries() ([]string, error) {
-	entries := make([]string, 0, len(g.schemas))
-	for k, v := range g.schemas {
-		name := g.formatName(k)
-		s := g.formatSchema(v)
+func (e *Exporter) createTerraformSchemaEntries(schemas map[string]map[string]*schema.Schema) ([]string, error) {
+	entries := make([]string, 0, len(schemas))
+	for k, v := range schemas {
+		name := e.formatName(k)
+		s := e.formatSchema(v)
 		tfs := tfSchema{Name: name, Params: s}
 		var buffer bytes.Buffer
 		if err := template.Must(template.New("schemaTemplate").Parse(schemaTemplate)).Execute(&buffer, tfs); err != nil {
@@ -47,12 +55,12 @@ func (g *Generator) createTerraformSchemaEntries() ([]string, error) {
 	return entries, nil
 }
 
-func (g *Generator) formatName(name string) string {
+func (e *Exporter) formatName(name string) string {
 	tmp := strings.Split(name, ".")
 	return tmp[len(tmp)-1]
 }
 
-func (g *Generator) formatSchema(schema map[string]*schema.Schema) string {
+func (e *Exporter) formatSchema(schema map[string]*schema.Schema) string {
 	s := valast.String(schema)
 	return fixValueTypeEnum(s)
 }

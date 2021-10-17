@@ -16,11 +16,12 @@ var genCmd = &cobra.Command{
 	Long:  `gen`,
 	Run:   nil,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		g := generator.New(input, output, outputPackage)
-		if err := g.Parse(); err != nil {
+		config := generator.NewConfig(input, output, outputPackage)
+		g := generator.New(nil, config)
+		if err := g.Generate(); err != nil {
 			return err
 		}
-		if err := g.Export(); err != nil {
+		if err := g.Export(nil); err != nil {
 			return err
 		}
 		return nil
