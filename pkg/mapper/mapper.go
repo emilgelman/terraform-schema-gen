@@ -58,16 +58,22 @@ func (m *Mapper) parseDefinition(rootName, name string, openapiSchema *spec.Sche
 		m.parseDefinition(rootName, i, &prop, tfSchema, schemas)
 	}
 	if name == rootName {
+		for i := range openapiSchema.Required {
+			tfSchema[openapiSchema.Required[i]].Required = true
+		}
 		return
 	}
 	if openapiSchema.Type == nil {
 		return
 	}
+	newSchema := &schema.Schema{}
 	tType := openapiSchema.Type[0]
 	switch tType {
 	case "object":
-		tfSchema[name] = &schema.Schema{Type: schema.TypeMap}
+		newSchema.Type = schema.TypeMap
 	case "string":
-		tfSchema[name] = &schema.Schema{Type: schema.TypeString}
+		newSchema.Type = schema.TypeString
 	}
+	newSchema.Description = openapiSchema.Description
+	tfSchema[name] = newSchema
 }

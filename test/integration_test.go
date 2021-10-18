@@ -1,27 +1,29 @@
 package test
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"os/exec"
 	"plugin"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 )
 
 var expectedSchemas = map[string]map[string]*schema.Schema{
-	"GetEngineSpecSchema": {"BHP": &schema.Schema{
-		Type: schema.TypeString,
+	"GetEngineSpecSchema": {"bhp": &schema.Schema{
+		Type:     schema.TypeString,
+		Required: true,
 	}},
 	"GetCarSchema": {
-		"EngineSpec": &schema.Schema{
-			Type: schema.TypeList,
+		"engineSpec": &schema.Schema{
+			Type:     schema.TypeList,
+			Required: true,
 			Elem: &schema.Resource{Schema: map[string]*schema.Schema{
-				"BHP": {Type: schema.TypeString},
+				"bhp": {Type: schema.TypeString, Required: true},
 			}},
 		},
-		"Make":  &schema.Schema{Type: schema.TypeString},
-		"Model": &schema.Schema{Type: schema.TypeString},
+		"make":  &schema.Schema{Type: schema.TypeString, Required: true},
+		"model": &schema.Schema{Type: schema.TypeString},
 	},
 }
 
