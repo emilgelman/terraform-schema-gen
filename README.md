@@ -7,9 +7,9 @@ process.
 
 The generator will convert nested structs (at any level) to the equivalent Terraform schema. 
 
-TODO: Required fields
-
-TODO:Description
+Supported terraform schema properties:
+* Required
+* Description
 
 ### Known limitations
 
