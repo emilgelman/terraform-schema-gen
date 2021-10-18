@@ -18,6 +18,10 @@ type Exporter struct {
 	outputPackage string
 }
 
+func New(output, outputPackage string) *Exporter {
+	return &Exporter{output: output, outputPackage: outputPackage}
+}
+
 func (e *Exporter) Export(schemas map[string]map[string]*schema.Schema) error {
 	entries, err := e.createTerraformSchemaEntries(schemas)
 	if err != nil {

@@ -12,6 +12,10 @@ type Loader struct {
 	input string
 }
 
+func New(input string) *Loader {
+	return &Loader{input: input}
+}
+
 func (l *Loader) Load() (map[string]common.OpenAPIDefinition, error) {
 	plug, err := plugin.Open(l.input)
 	if err != nil {

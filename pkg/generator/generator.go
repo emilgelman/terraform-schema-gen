@@ -17,14 +17,13 @@ type SchemaExporter interface {
 }
 
 type Generator struct {
-	config           Config
 	definitionLoader OpenAPIDefinitionLoader
 	mapper           OpenAPIDefinitionMapper
 	exporter         SchemaExporter
 }
 
-func New(definitionLoader OpenAPIDefinitionLoader, mapper OpenAPIDefinitionMapper, config Config) *Generator {
-	return &Generator{definitionLoader: definitionLoader, mapper: mapper, config: config}
+func New(definitionLoader OpenAPIDefinitionLoader, mapper OpenAPIDefinitionMapper, exporter SchemaExporter) *Generator {
+	return &Generator{definitionLoader: definitionLoader, mapper: mapper, exporter: exporter}
 }
 
 func (g *Generator) Generate() error {

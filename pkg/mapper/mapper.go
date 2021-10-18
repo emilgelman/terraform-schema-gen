@@ -14,7 +14,11 @@ type SchemaDefinition struct {
 	Definition common.OpenAPIDefinition
 }
 
-func (m *Mapper) Convert(definitions map[string]common.OpenAPIDefinition) map[string]map[string]*schema.Schema {
+func New() *Mapper {
+	return &Mapper{}
+}
+
+func (m *Mapper) Map(definitions map[string]common.OpenAPIDefinition) map[string]map[string]*schema.Schema {
 	stack := m.createDefinitionsStack(definitions)
 	return m.parseDefinitionsStack(stack)
 }
@@ -35,35 +39,35 @@ func (m *Mapper) parseDefinitionsStack(stack []SchemaDefinition) map[string]map[
 	for len(stack) > 0 {
 		definition := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		s := make(map[string]*schema.Schema)
-		m.parseDefinition(definition.Name, definition.Name, &definition.Definition.Schema, s)
-		schemas[definition.Name] = s
+		tfSchema := make(map[string]*schema.Schema)
+		m.parseDefinition(definition.Name, definition.Name, &definition.Definition.Schema, tfSchema, schemas)
+		schemas[definition.Name] = tfSchema
 	}
 	return schemas
 }
 
-func (m *Mapper) parseDefinition(rootName, name string, s *spec.Schema, wtf map[string]*schema.Schema) {
-	for n := range s.Properties {
-		prop := s.Properties[n]
+func (m *Mapper) parseDefinition(rootName, name string, openapiSchema *spec.Schema, tfSchema map[string]*schema.Schema, schemas map[string]map[string]*schema.Schema) {
+	for i := range openapiSchema.Properties {
+		prop := openapiSchema.Properties[i]
 		if prop.SchemaProps.Type == nil {
 			path := prop.Ref.Ref.GetURL().Path
-			ss := m.schemas[path]
-			wtf[n] = &schema.Schema{Type: schema.TypeList, Elem: &schema.Resource{Schema: ss}}
+			ss := schemas[path]
+			tfSchema[i] = &schema.Schema{Type: schema.TypeList, Elem: &schema.Resource{Schema: ss}}
 			continue
 		}
-		m.parseDefinition(rootName, n, &prop, m)
+		m.parseDefinition(rootName, i, &prop, tfSchema, schemas)
 	}
 	if name == rootName {
 		return
 	}
-	if s.Type == nil {
+	if openapiSchema.Type == nil {
 		return
 	}
-	tType := s.Type[0]
+	tType := openapiSchema.Type[0]
 	switch tType {
 	case "object":
-		wtf[name] = &schema.Schema{Type: schema.TypeMap}
+		tfSchema[name] = &schema.Schema{Type: schema.TypeMap}
 	case "string":
-		wtf[name] = &schema.Schema{Type: schema.TypeString}
+		tfSchema[name] = &schema.Schema{Type: schema.TypeString}
 	}
 }
