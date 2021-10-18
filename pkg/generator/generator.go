@@ -32,7 +32,7 @@ func (g *Generator) Generate() error {
 		return err
 	}
 	schemas := g.mapper.Map(definitions)
-	if err = g.exporter.Export(schemas); err != nil {
+	if err := g.exporter.Export(schemas); err != nil {
 		return err
 	}
 	return nil

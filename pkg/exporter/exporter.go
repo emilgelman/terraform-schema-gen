@@ -30,7 +30,7 @@ func (e *Exporter) Export(schemas map[string]map[string]*schema.Schema) error {
 	t := template.Must(template.New("tfSchemasTemplate").Parse(tfSchemasTemplate))
 	var buffer bytes.Buffer
 	final := tfSchemas{Schemas: strings.Join(entries, "\n"), Package: e.outputPackage}
-	if err := t.Execute(&buffer, final); err != nil {
+	if err = t.Execute(&buffer, final); err != nil {
 		panic(err)
 	}
 	file, err := ioutil.ReadAll(&buffer)
@@ -52,7 +52,7 @@ func (e *Exporter) createTerraformSchemaEntries(schemas map[string]map[string]*s
 		tfs := tfSchema{Name: name, Params: s}
 		var buffer bytes.Buffer
 		if err := template.Must(template.New("schemaTemplate").Parse(schemaTemplate)).Execute(&buffer, tfs); err != nil {
-			panic(err)
+			return nil, err
 		}
 		entries = append(entries, buffer.String())
 	}
@@ -64,9 +64,9 @@ func (e *Exporter) formatName(name string) string {
 	return tmp[len(tmp)-1]
 }
 
-func (e *Exporter) formatSchema(schema map[string]*schema.Schema) string {
-	s := valast.String(schema)
-	return fixValueTypeEnum(s)
+func (e *Exporter) formatSchema(s map[string]*schema.Schema) string {
+	str := valast.String(s)
+	return fixValueTypeEnum(str)
 }
 
 func fixValueTypeEnum(params string) string {

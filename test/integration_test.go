@@ -45,13 +45,15 @@ func TestGenerator(t *testing.T) {
 }
 
 func compileGeneratedAsPlugin(t *testing.T) {
-	command := exec.Command("go", "build", "-buildmode=plugin", "-o", "./output/main/terraform_generated.so", "./output/main/terraform_generated.go")
+	command := exec.Command("go", "build", "-buildmode=plugin",
+		"-o", "./output/main/terraform_generated.so", "./output/main/terraform_generated.go")
 	err := command.Run()
 	assert.NoError(t, err)
 }
 
 func runGenerator(t *testing.T) {
-	command := exec.Command("./output/terraform-schema-gen", "gen", "--input", "./output/main/openapi_generated.so", "--output", "./output/main/terraform_generated.go", "--package", "main")
+	command := exec.Command("./output/terraform-schema-gen", "gen",
+		"--input", "./output/main/openapi_generated.so", "--output", "./output/main/terraform_generated.go", "--package", "main")
 	err := command.Run()
 	assert.NoError(t, err)
 }
@@ -63,13 +65,15 @@ func buildTerraformSchemaGen(t *testing.T) {
 }
 
 func compileOpenAPISchemaAsPlugin(t *testing.T) {
-	command := exec.Command("go", "build", "-buildmode=plugin", "-o", "./output/main/openapi_generated.so", "./output/main/openapi_generated.go")
+	command := exec.Command("go", "build", "-buildmode=plugin",
+		"-o", "./output/main/openapi_generated.so", "./output/main/openapi_generated.go")
 	err := command.Run()
 	assert.NoError(t, err)
 }
 
 func generateOpenAPISchema(t *testing.T) {
-	command := exec.Command("go", "run", "k8s.io/kube-openapi/cmd/openapi-gen", "-i", "./input", "-p", "./output/main", "-h", "./header.txt", "-o", ".")
+	command := exec.Command("go", "run", "k8s.io/kube-openapi/cmd/openapi-gen",
+		"-i", "./input", "-p", "./output/main", "-h", "./header.txt", "-o", ".")
 	err := command.Run()
 	assert.NoError(t, err)
 }

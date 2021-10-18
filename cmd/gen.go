@@ -25,6 +25,7 @@ var genCmd = &cobra.Command{
 	},
 }
 
+//nolint: errcheck
 func init() {
 	genCmd.Flags().StringVarP(&config.Input, "input", "i", "", "input file")
 	genCmd.MarkFlagRequired("input")

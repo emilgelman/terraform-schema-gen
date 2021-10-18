@@ -25,7 +25,8 @@ func (m *Mapper) Map(definitions map[string]common.OpenAPIDefinition) map[string
 
 func (m *Mapper) createDefinitionsStack(definitions map[string]common.OpenAPIDefinition) []SchemaDefinition {
 	var stack []SchemaDefinition
-	for name, definition := range definitions {
+	for name := range definitions {
+		definition := definitions[name]
 		stack = append(stack, SchemaDefinition{Name: name, Definition: definition})
 		for _, dependency := range definition.Dependencies {
 			stack = append(stack, SchemaDefinition{Name: dependency, Definition: definitions[dependency]})
@@ -46,7 +47,8 @@ func (m *Mapper) parseDefinitionsStack(stack []SchemaDefinition) map[string]map[
 	return schemas
 }
 
-func (m *Mapper) parseDefinition(rootName, name string, openapiSchema *spec.Schema, tfSchema map[string]*schema.Schema, schemas map[string]map[string]*schema.Schema) {
+func (m *Mapper) parseDefinition(rootName, name string, openapiSchema *spec.Schema,
+	tfSchema map[string]*schema.Schema, schemas map[string]map[string]*schema.Schema) {
 	for i := range openapiSchema.Properties {
 		prop := openapiSchema.Properties[i]
 		if prop.SchemaProps.Type == nil {
