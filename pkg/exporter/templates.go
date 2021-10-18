@@ -1,4 +1,4 @@
-package generator
+package exporter
 
 type tfSchema struct {
 	Name   string
