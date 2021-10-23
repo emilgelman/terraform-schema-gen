@@ -9,5 +9,11 @@ type Car struct {
 
 // +k8s:openapi-gen=true
 type EngineSpec struct {
-	BHP string `json:"bhp"`
+	BHP       string     `json:"bhp"`
+	Cylinders []Cylinder `json:"cylinders"`
+}
+
+// +k8s:openapi-gen=true
+type Cylinder struct {
+	Number string
 }

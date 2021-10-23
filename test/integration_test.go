@@ -10,20 +10,44 @@ import (
 )
 
 var expectedSchemas = map[string]map[string]*schema.Schema{
-	"GetEngineSpecSchema": {"bhp": &schema.Schema{
-		Type:     schema.TypeString,
-		Required: true,
-	}},
+	"GetEngineSpecSchema": {
+		"bhp": &schema.Schema{
+			Type:     schema.TypeString,
+			Required: true,
+		},
+		"cylinders": &schema.Schema{
+			Type:     schema.TypeList,
+			Required: true,
+			Elem: &map[string]*schema.Schema{"Number": {
+				Type:     schema.TypeString,
+				Required: true,
+			}},
+		},
+	},
 	"GetCarSchema": {
 		"engineSpec": &schema.Schema{
 			Type:     schema.TypeList,
 			Required: true,
 			Elem: &schema.Resource{Schema: map[string]*schema.Schema{
 				"bhp": {Type: schema.TypeString, Required: true},
+				"cylinders": {
+					Type:     schema.TypeList,
+					Required: true,
+					Elem: &map[string]*schema.Schema{"Number": {
+						Type:     schema.TypeString,
+						Required: true,
+					}},
+				},
 			}},
 		},
 		"make":  &schema.Schema{Type: schema.TypeString, Required: true},
 		"model": &schema.Schema{Type: schema.TypeString},
+	},
+	"GetCylinderSchema": {
+		"Number": &schema.Schema{
+			Type:     schema.TypeString,
+			Required: true,
+		},
 	},
 }
 
