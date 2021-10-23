@@ -6,6 +6,8 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
+const array = "array"
+
 type Mapper struct {
 }
 
@@ -57,6 +59,17 @@ func (m *Mapper) parseDefinition(rootName, name string, openapiSchema *spec.Sche
 			tfSchema[i] = &schema.Schema{Type: schema.TypeList, Elem: &schema.Resource{Schema: ss}}
 			continue
 		}
+		if prop.SchemaProps.Type[0] == array {
+			if len(prop.SchemaProps.Items.Schema.Type) > 0 {
+				t := prop.SchemaProps.Items.Schema.Type[0]
+				tfSchema[i] = &schema.Schema{Type: schema.TypeList, Elem: &schema.Schema{Type: mapType(t)}}
+				continue
+			}
+			path := prop.SchemaProps.Items.Schema.Ref.Ref.GetURL().Path
+			ss := schemas[path]
+			tfSchema[i] = &schema.Schema{Type: schema.TypeList, Elem: &ss}
+			continue
+		}
 		m.parseDefinition(rootName, i, &prop, tfSchema, schemas)
 	}
 	if name == rootName {
@@ -70,12 +83,17 @@ func (m *Mapper) parseDefinition(rootName, name string, openapiSchema *spec.Sche
 	}
 	newSchema := &schema.Schema{}
 	tType := openapiSchema.Type[0]
-	switch tType {
-	case "object":
-		newSchema.Type = schema.TypeMap
-	case "string":
-		newSchema.Type = schema.TypeString
-	}
+	newSchema.Type = mapType(tType)
 	newSchema.Description = openapiSchema.Description
 	tfSchema[name] = newSchema
+}
+
+func mapType(t string) schema.ValueType {
+	switch t {
+	case "object":
+		return schema.TypeMap
+	case array:
+		return schema.TypeList
+	}
+	return schema.TypeString
 }
