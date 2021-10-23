@@ -43,7 +43,49 @@ func TestMapper(t *testing.T) {
 	assert.Equal(t, expected, output)
 }
 
-func TestMapArrayDefinition(t *testing.T) {
+func TestMapArrayOfPrimitive(t *testing.T) {
+	m := New()
+	definitions := map[string]common.OpenAPIDefinition{
+		"car": {
+			Schema: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"object"},
+					Properties: map[string]spec.Schema{
+						"colors": {
+							SchemaProps: spec.SchemaProps{
+								Type: []string{"array"},
+								Items: &spec.SchemaOrArray{
+									Schema: &spec.Schema{
+										SchemaProps: spec.SchemaProps{
+											Default: "",
+											Type:    []string{"string"},
+											Format:  "",
+										},
+									},
+								},
+							},
+						},
+					},
+					Required: []string{"colors"},
+				},
+			},
+		},
+	}
+	output := m.Map(definitions)
+	expected := map[string]map[string]*schema.Schema{
+		"car": {
+			"colors": &schema.Schema{
+				Type:     schema.TypeList,
+				Required: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+		},
+	}
+	assert.Equal(t, expected, output)
+
+}
+
+func TestMapArrayOfObject(t *testing.T) {
 	m := New()
 	ref := func(path string) spec.Ref {
 		return spec.Ref{Ref: jsonreference.MustCreateRef(path)}
