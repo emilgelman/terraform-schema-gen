@@ -31,9 +31,9 @@ func (m *Mapper) createDefinitionsStack(definitions map[string]common.OpenAPIDef
 	var stack []SchemaDefinition
 	for name := range definitions {
 		definition := definitions[name]
-		stack = append(stack, SchemaDefinition{Name: name, Definition: definition})
+		stack = append(stack, SchemaDefinition{Name: strings.ToLower(name), Definition: definition})
 		for _, dependency := range definition.Dependencies {
-			stack = append(stack, SchemaDefinition{Name: dependency, Definition: definitions[dependency]})
+			stack = append(stack, SchemaDefinition{Name: strings.ToLower(dependency), Definition: definitions[dependency]})
 		}
 	}
 	return stack
