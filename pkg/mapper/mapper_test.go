@@ -91,7 +91,7 @@ func TestMapArrayOfObject(t *testing.T) {
 		return spec.Ref{Ref: jsonreference.MustCreateRef(path)}
 	}
 	definitions := map[string]common.OpenAPIDefinition{
-		"engineSpec": {
+		"enginespec": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type: []string{"object"},
@@ -121,7 +121,7 @@ func TestMapArrayOfObject(t *testing.T) {
 				SchemaProps: spec.SchemaProps{
 					Type: []string{"object"},
 					Properties: map[string]spec.Schema{
-						"Number": {
+						"number": {
 							SchemaProps: spec.SchemaProps{
 								Default: "",
 								Type:    []string{"string"},
@@ -129,19 +129,19 @@ func TestMapArrayOfObject(t *testing.T) {
 							},
 						},
 					},
-					Required: []string{"Number"},
+					Required: []string{"number"},
 				},
 			},
 		},
 	}
 	output := m.Map(definitions)
 	expected := map[string]map[string]*schema.Schema{
-		"engineSpec": {
+		"enginespec": {
 			"cylinders": &schema.Schema{
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &map[string]*schema.Schema{
-					"Number": {
+					"number": {
 						Type:     schema.TypeString,
 						Required: true,
 					},
@@ -149,7 +149,7 @@ func TestMapArrayOfObject(t *testing.T) {
 			},
 		},
 		"cylinder": {
-			"Number": &schema.Schema{
+			"number": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			}},

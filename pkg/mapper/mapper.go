@@ -1,6 +1,8 @@
 package mapper
 
 import (
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -44,7 +46,7 @@ func (m *Mapper) parseDefinitionsStack(stack []SchemaDefinition) map[string]map[
 		stack = stack[:len(stack)-1]
 		tfSchema := make(map[string]*schema.Schema)
 		m.parseDefinition(definition.Name, definition.Name, &definition.Definition.Schema, tfSchema, schemas)
-		schemas[definition.Name] = tfSchema
+		schemas[strings.ToLower(definition.Name)] = tfSchema
 	}
 	return schemas
 }
@@ -55,7 +57,7 @@ func (m *Mapper) parseDefinition(rootName, name string, openapiSchema *spec.Sche
 		prop := openapiSchema.Properties[i]
 		if prop.SchemaProps.Type == nil {
 			path := prop.Ref.Ref.GetURL().Path
-			ss := schemas[path]
+			ss := schemas[strings.ToLower(path)]
 			tfSchema[i] = &schema.Schema{Type: schema.TypeList, Elem: &schema.Resource{Schema: ss}}
 			continue
 		}
@@ -66,7 +68,7 @@ func (m *Mapper) parseDefinition(rootName, name string, openapiSchema *spec.Sche
 				continue
 			}
 			path := prop.SchemaProps.Items.Schema.Ref.Ref.GetURL().Path
-			ss := schemas[path]
+			ss := schemas[strings.ToLower(path)]
 			tfSchema[i] = &schema.Schema{Type: schema.TypeList, Elem: &ss}
 			continue
 		}

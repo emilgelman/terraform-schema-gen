@@ -15,5 +15,5 @@ type EngineSpec struct {
 
 // +k8s:openapi-gen=true
 type Cylinder struct {
-	Number string
+	Number string `json:"number"`
 }

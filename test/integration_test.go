@@ -10,7 +10,7 @@ import (
 )
 
 var expectedSchemas = map[string]map[string]*schema.Schema{
-	"GetEngineSpecSchema": {
+	"GetenginespecSchema": {
 		"bhp": &schema.Schema{
 			Type:     schema.TypeString,
 			Required: true,
@@ -18,13 +18,13 @@ var expectedSchemas = map[string]map[string]*schema.Schema{
 		"cylinders": &schema.Schema{
 			Type:     schema.TypeList,
 			Required: true,
-			Elem: &map[string]*schema.Schema{"Number": {
+			Elem: &map[string]*schema.Schema{"number": {
 				Type:     schema.TypeString,
 				Required: true,
 			}},
 		},
 	},
-	"GetCarSchema": {
+	"GetcarSchema": {
 		"engineSpec": &schema.Schema{
 			Type:     schema.TypeList,
 			Required: true,
@@ -33,7 +33,7 @@ var expectedSchemas = map[string]map[string]*schema.Schema{
 				"cylinders": {
 					Type:     schema.TypeList,
 					Required: true,
-					Elem: &map[string]*schema.Schema{"Number": {
+					Elem: &map[string]*schema.Schema{"number": {
 						Type:     schema.TypeString,
 						Required: true,
 					}},
@@ -43,8 +43,8 @@ var expectedSchemas = map[string]map[string]*schema.Schema{
 		"make":  &schema.Schema{Type: schema.TypeString, Required: true},
 		"model": &schema.Schema{Type: schema.TypeString},
 	},
-	"GetCylinderSchema": {
-		"Number": &schema.Schema{
+	"GetcylinderSchema": {
+		"number": &schema.Schema{
 			Type:     schema.TypeString,
 			Required: true,
 		},
