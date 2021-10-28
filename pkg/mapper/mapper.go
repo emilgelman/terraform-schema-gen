@@ -69,7 +69,9 @@ func (m *Mapper) parseDefinition(rootName, name string, openapiSchema *spec.Sche
 			}
 			path := prop.SchemaProps.Items.Schema.Ref.Ref.GetURL().Path
 			ss := schemas[strings.ToLower(path)]
-			tfSchema[i] = &schema.Schema{Type: schema.TypeList, Elem: &ss}
+			tfSchema[i] = &schema.Schema{Type: schema.TypeList, Elem: &schema.Resource{
+				Schema: ss,
+			}}
 			continue
 		}
 		m.parseDefinition(rootName, i, &prop, tfSchema, schemas)

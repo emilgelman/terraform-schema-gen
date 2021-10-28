@@ -18,10 +18,12 @@ var expectedSchemas = map[string]map[string]*schema.Schema{
 		"cylinders": &schema.Schema{
 			Type:     schema.TypeList,
 			Required: true,
-			Elem: &map[string]*schema.Schema{"number": {
-				Type:     schema.TypeString,
-				Required: true,
-			}},
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{"number": {
+					Type:     schema.TypeString,
+					Required: true,
+				}},
+			},
 		},
 	},
 	"GetcarSchema": {
@@ -33,10 +35,12 @@ var expectedSchemas = map[string]map[string]*schema.Schema{
 				"cylinders": {
 					Type:     schema.TypeList,
 					Required: true,
-					Elem: &map[string]*schema.Schema{"number": {
-						Type:     schema.TypeString,
-						Required: true,
-					}},
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{"number": {
+							Type:     schema.TypeString,
+							Required: true,
+						}},
+					},
 				},
 			}},
 		},
