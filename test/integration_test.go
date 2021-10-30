@@ -10,7 +10,7 @@ import (
 )
 
 var expectedSchemas = map[string]map[string]*schema.Schema{
-	"GetenginespecSchema": {
+	"GetEngineSpecSchema": {
 		"bhp": &schema.Schema{
 			Type:     schema.TypeString,
 			Required: true,
@@ -19,15 +19,16 @@ var expectedSchemas = map[string]map[string]*schema.Schema{
 			Type:     schema.TypeList,
 			Required: true,
 			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{"number": {
-					Type:     schema.TypeString,
-					Required: true,
-				}},
+				Schema: map[string]*schema.Schema{
+					"number": {
+						Type:     schema.TypeString,
+						Required: true,
+					}},
 			},
 		},
 	},
-	"GetcarSchema": {
-		"engineSpec": &schema.Schema{
+	"GetCarSchema": {
+		"enginespec": &schema.Schema{
 			Type:     schema.TypeList,
 			Required: true,
 			Elem: &schema.Resource{Schema: map[string]*schema.Schema{
@@ -45,9 +46,9 @@ var expectedSchemas = map[string]map[string]*schema.Schema{
 			}},
 		},
 		"make":  &schema.Schema{Type: schema.TypeString, Required: true},
-		"model": &schema.Schema{Type: schema.TypeString},
+		"model": &schema.Schema{Type: schema.TypeString, Optional: true},
 	},
-	"GetcylinderSchema": {
+	"GetCylinderSchema": {
 		"number": &schema.Schema{
 			Type:     schema.TypeString,
 			Required: true,
@@ -56,8 +57,6 @@ var expectedSchemas = map[string]map[string]*schema.Schema{
 }
 
 func TestGenerator(t *testing.T) {
-	generateOpenAPISchema(t)
-	compileOpenAPISchemaAsPlugin(t)
 	buildTerraformSchemaGen(t)
 	runGenerator(t)
 	compileGeneratedAsPlugin(t)
@@ -81,27 +80,13 @@ func compileGeneratedAsPlugin(t *testing.T) {
 
 func runGenerator(t *testing.T) {
 	command := exec.Command("./output/terraform-schema-gen", "gen",
-		"--input", "./output/main/openapi_generated.so", "--output", "./output/main/terraform_generated.go", "--package", "main")
+		"--input", "./input", "--output", "./output/main/terraform_generated.go", "--package", "main")
 	err := command.Run()
 	assert.NoError(t, err)
 }
 
 func buildTerraformSchemaGen(t *testing.T) {
 	command := exec.Command("go", "build", "-o", "./output/terraform-schema-gen", "../main.go")
-	err := command.Run()
-	assert.NoError(t, err)
-}
-
-func compileOpenAPISchemaAsPlugin(t *testing.T) {
-	command := exec.Command("go", "build", "-buildmode=plugin",
-		"-o", "./output/main/openapi_generated.so", "./output/main/openapi_generated.go")
-	err := command.Run()
-	assert.NoError(t, err)
-}
-
-func generateOpenAPISchema(t *testing.T) {
-	command := exec.Command("go", "run", "k8s.io/kube-openapi/cmd/openapi-gen",
-		"-i", "./input", "-p", "./output/main", "-h", "./header.txt", "-o", ".")
 	err := command.Run()
 	assert.NoError(t, err)
 }

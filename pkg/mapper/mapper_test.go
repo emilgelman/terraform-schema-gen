@@ -3,158 +3,212 @@ package mapper
 import (
 	"testing"
 
-	"github.com/go-openapi/jsonreference"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/validation/spec"
+	"k8s.io/gengo/types"
 )
 
+// nolint
 func TestMapper(t *testing.T) {
-	m := New()
-	definitions := map[string]common.OpenAPIDefinition{
-		"car": {
-			Schema: spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type: []string{"object"},
-					Properties: map[string]spec.Schema{
-						"model": {
-							SchemaProps: spec.SchemaProps{
-								Description: "Describes the car model",
-								Type:        []string{"string"},
-							},
+	var tests = []struct {
+		name     string
+		input    []*types.Type
+		expected map[string]map[string]*schema.Schema
+	}{
+		{
+			name: "struct with primitive properties",
+			input: []*types.Type{
+				{
+					Name: types.Name{Name: "Car"},
+					Kind: types.Struct,
+					Members: []types.Member{
+						{
+							Name: "Model",
+							Type: types.String,
+							Tags: "json:model,omitempty",
+						},
+						{
+							Name: "Year",
+							Type: types.Int64,
+						},
+						{
+							Name: "IsNew",
+							Type: types.Bool,
 						},
 					},
-					Required: []string{"model"},
+				},
+			},
+			expected: map[string]map[string]*schema.Schema{
+				"Car": {
+					"model": {
+						Type:     schema.TypeString,
+						Required: false,
+						Optional: true,
+					},
+					"year": {
+						Type:     schema.TypeInt,
+						Required: true,
+					},
+					"isnew": {
+						Type:     schema.TypeBool,
+						Required: true,
+					},
 				},
 			},
 		},
-	}
-	output := m.Map(definitions)
-	expected := map[string]map[string]*schema.Schema{
-		"car": {
-			"model": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Describes the car model",
-			},
-		},
-	}
-	assert.Equal(t, expected, output)
-}
-
-func TestMapArrayOfPrimitive(t *testing.T) {
-	m := New()
-	definitions := map[string]common.OpenAPIDefinition{
-		"car": {
-			Schema: spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type: []string{"object"},
-					Properties: map[string]spec.Schema{
-						"colors": {
-							SchemaProps: spec.SchemaProps{
-								Type: []string{"array"},
-								Items: &spec.SchemaOrArray{
-									Schema: &spec.Schema{
-										SchemaProps: spec.SchemaProps{
-											Default: "",
-											Type:    []string{"string"},
-											Format:  "",
-										},
+		{
+			name: "nested structs",
+			input: []*types.Type{
+				{
+					Name: types.Name{Name: "Car"},
+					Kind: types.Struct,
+					Members: []types.Member{
+						{
+							Name: "EngineSpec",
+							Type: &types.Type{
+								Name: types.Name{Name: "EngineSpec"},
+								Kind: types.Struct,
+								Members: []types.Member{
+									{
+										Name: "BHP",
+										Type: types.String,
 									},
 								},
 							},
 						},
 					},
-					Required: []string{"colors"},
+				},
+			},
+			expected: map[string]map[string]*schema.Schema{
+				"Car": {
+					"enginespec": {
+						Type:     schema.TypeList,
+						Required: true,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"bhp": {
+									Type:     schema.TypeString,
+									Required: true,
+								},
+							},
+						},
+					},
 				},
 			},
 		},
-	}
-	output := m.Map(definitions)
-	expected := map[string]map[string]*schema.Schema{
-		"car": {
-			"colors": &schema.Schema{
-				Type:     schema.TypeList,
-				Required: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-			},
-		},
-	}
-	assert.Equal(t, expected, output)
-
-}
-
-func TestMapArrayOfObject(t *testing.T) {
-	m := New()
-	ref := func(path string) spec.Ref {
-		return spec.Ref{Ref: jsonreference.MustCreateRef(path)}
-	}
-	definitions := map[string]common.OpenAPIDefinition{
-		"enginespec": {
-			Schema: spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type: []string{"object"},
-					Properties: map[string]spec.Schema{
-						"cylinders": {
-							SchemaProps: spec.SchemaProps{
-								Type: []string{"array"},
-								Items: &spec.SchemaOrArray{
-									Schema: &spec.Schema{
-										SchemaProps: spec.SchemaProps{
-											Default: map[string]interface{}{},
-											Ref:     ref("cylinder"),
-										},
+		{
+			name: "struct with struct slice",
+			input: []*types.Type{
+				{
+					Name: types.Name{Name: "Car"},
+					Kind: types.Struct,
+					Members: []types.Member{
+						{
+							Name: "EngineSpec",
+							Type: &types.Type{
+								Name: types.Name{Name: "EngineSpec"},
+								Kind: types.Struct,
+								Members: []types.Member{
+									{
+										Name: "BHP",
+										Type: types.String,
 									},
 								},
 							},
 						},
 					},
-					Required: []string{"cylinders"},
 				},
 			},
-			Dependencies: []string{
-				"cylinder"},
-		},
-		"cylinder": {
-			Schema: spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type: []string{"object"},
-					Properties: map[string]spec.Schema{
-						"number": {
-							SchemaProps: spec.SchemaProps{
-								Default: "",
-								Type:    []string{"string"},
-								Format:  "",
+			expected: map[string]map[string]*schema.Schema{
+				"Car": {
+					"enginespec": {
+						Type:     schema.TypeList,
+						Required: true,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"bhp": {
+									Type:     schema.TypeString,
+									Required: true,
+								},
 							},
 						},
 					},
-					Required: []string{"number"},
 				},
 			},
 		},
-	}
-	output := m.Map(definitions)
-	expected := map[string]map[string]*schema.Schema{
-		"enginespec": {
-			"cylinders": &schema.Schema{
-				Type:     schema.TypeList,
-				Required: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"number": {
-							Type:     schema.TypeString,
-							Required: true,
+		{
+			name: "struct with primitive slice",
+			input: []*types.Type{
+				{
+					Name: types.Name{Name: "Car"},
+					Kind: types.Struct,
+					Members: []types.Member{
+						{
+							Name: "EngineSpec",
+							Type: &types.Type{
+								Name: types.Name{Name: "[]string"},
+								Kind: types.Slice,
+								Elem: &types.Type{
+									Name: types.Name{Name: "string"},
+									Kind: types.Builtin,
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]map[string]*schema.Schema{
+				"Car": {
+					"enginespec": {
+						Type:     schema.TypeList,
+						Required: true,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
 						},
 					},
 				},
 			},
 		},
-		"cylinder": {
-			"number": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			}},
+		{
+			name: "struct with map[string]interface{}",
+			input: []*types.Type{
+				{
+					Name: types.Name{Name: "Car"},
+					Kind: types.Struct,
+					Members: []types.Member{
+						{
+							Name: "EngineSpec",
+							Type: &types.Type{
+								Name: types.Name{Name: "map[string]interface{}"},
+								Kind: types.Map,
+								Elem: &types.Type{
+									Name: types.Name{Name: "interface{}"},
+									Kind: types.Interface,
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]map[string]*schema.Schema{
+				"Car": {
+					"enginespec": {
+						Type:     schema.TypeMap,
+						Required: true,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
+					},
+				},
+			},
+		},
 	}
-	assert.Equal(t, expected, output)
+	m := New()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			output := m.Map(test.input)
+			assert.Equal(t, test.expected, output)
+		})
+	}
 }

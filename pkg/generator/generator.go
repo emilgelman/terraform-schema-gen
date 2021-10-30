@@ -2,14 +2,14 @@ package generator
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/gengo/types"
 )
 
-type OpenAPIDefinitionLoader interface {
-	Load() (map[string]common.OpenAPIDefinition, error)
+type StructParser interface {
+	Parse() ([]*types.Type, error)
 }
 type OpenAPIDefinitionMapper interface {
-	Map(map[string]common.OpenAPIDefinition) map[string]map[string]*schema.Schema
+	Map([]*types.Type) map[string]map[string]*schema.Schema
 }
 
 type SchemaExporter interface {
@@ -17,21 +17,21 @@ type SchemaExporter interface {
 }
 
 type Generator struct {
-	definitionLoader OpenAPIDefinitionLoader
-	mapper           OpenAPIDefinitionMapper
-	exporter         SchemaExporter
+	parser   StructParser
+	mapper   OpenAPIDefinitionMapper
+	exporter SchemaExporter
 }
 
-func New(definitionLoader OpenAPIDefinitionLoader, mapper OpenAPIDefinitionMapper, exporter SchemaExporter) *Generator {
-	return &Generator{definitionLoader: definitionLoader, mapper: mapper, exporter: exporter}
+func New(parser StructParser, mapper OpenAPIDefinitionMapper, exporter SchemaExporter) *Generator {
+	return &Generator{parser: parser, mapper: mapper, exporter: exporter}
 }
 
 func (g *Generator) Generate() error {
-	definitions, err := g.definitionLoader.Load()
+	parsedTypes, err := g.parser.Parse()
 	if err != nil {
 		return err
 	}
-	schemas := g.mapper.Map(definitions)
+	schemas := g.mapper.Map(parsedTypes)
 	if err := g.exporter.Export(schemas); err != nil {
 		return err
 	}

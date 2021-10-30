@@ -1,103 +1,120 @@
 package mapper
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/validation/spec"
+	"k8s.io/gengo/types"
 )
 
-const array = "array"
-
 type Mapper struct {
-}
-
-type SchemaDefinition struct {
-	Name       string
-	Definition common.OpenAPIDefinition
 }
 
 func New() *Mapper {
 	return &Mapper{}
 }
 
-func (m *Mapper) Map(definitions map[string]common.OpenAPIDefinition) map[string]map[string]*schema.Schema {
-	stack := m.createDefinitionsStack(definitions)
-	return m.parseDefinitionsStack(stack)
-}
-
-func (m *Mapper) createDefinitionsStack(definitions map[string]common.OpenAPIDefinition) []SchemaDefinition {
-	var stack []SchemaDefinition
-	for name := range definitions {
-		definition := definitions[name]
-		stack = append(stack, SchemaDefinition{Name: strings.ToLower(name), Definition: definition})
-		for _, dependency := range definition.Dependencies {
-			stack = append(stack, SchemaDefinition{Name: strings.ToLower(dependency), Definition: definitions[dependency]})
-		}
+func (m *Mapper) Map(parsedTypes []*types.Type) map[string]map[string]*schema.Schema {
+	res := make(map[string]map[string]*schema.Schema)
+	for t := range parsedTypes {
+		s := make(map[string]*schema.Schema)
+		name := parsedTypes[t].Name.Name
+		traverse(parsedTypes[t], name, name, "", s)
+		res[name] = s
 	}
-	return stack
+	return res
 }
 
-func (m *Mapper) parseDefinitionsStack(stack []SchemaDefinition) map[string]map[string]*schema.Schema {
-	schemas := make(map[string]map[string]*schema.Schema)
-	for len(stack) > 0 {
-		definition := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
-		tfSchema := make(map[string]*schema.Schema)
-		m.parseDefinition(definition.Name, definition.Name, &definition.Definition.Schema, tfSchema, schemas)
-		schemas[strings.ToLower(definition.Name)] = tfSchema
-	}
-	return schemas
-}
+func traverse(t *types.Type, name, rootName, tags string, s map[string]*schema.Schema) {
+	name = strings.ToLower(name)
+	rootName = strings.ToLower(rootName)
+	switch t.Kind {
+	// The first cases handles nested structures and translates them recursively
+	// If it is a pointer we need to unwrap and recurse
+	case types.Pointer:
+		traverse(t.Elem, name, rootName, "", s)
 
-func (m *Mapper) parseDefinition(rootName, name string, openapiSchema *spec.Schema,
-	tfSchema map[string]*schema.Schema, schemas map[string]map[string]*schema.Schema) {
-	for i := range openapiSchema.Properties {
-		prop := openapiSchema.Properties[i]
-		if prop.SchemaProps.Type == nil {
-			path := prop.Ref.Ref.GetURL().Path
-			ss := schemas[strings.ToLower(path)]
-			tfSchema[i] = &schema.Schema{Type: schema.TypeList, Elem: &schema.Resource{Schema: ss}}
-			continue
+	// If it is a struct we translate each field
+	case types.Struct:
+		x := make(map[string]*schema.Schema)
+		for _, member := range t.Members {
+			traverse(member.Type, member.Name, rootName, member.Tags, x)
 		}
-		if prop.SchemaProps.Type[0] == array {
-			if len(prop.SchemaProps.Items.Schema.Type) > 0 {
-				t := prop.SchemaProps.Items.Schema.Type[0]
-				tfSchema[i] = &schema.Schema{Type: schema.TypeList, Elem: &schema.Schema{Type: mapType(t)}}
-				continue
+		if name == rootName {
+			for k, v := range x {
+				s[k] = v
 			}
-			path := prop.SchemaProps.Items.Schema.Ref.Ref.GetURL().Path
-			ss := schemas[strings.ToLower(path)]
-			tfSchema[i] = &schema.Schema{Type: schema.TypeList, Elem: &schema.Resource{
-				Schema: ss,
-			}}
-			continue
+			return
 		}
-		m.parseDefinition(rootName, i, &prop, tfSchema, schemas)
-	}
-	if name == rootName {
-		for i := range openapiSchema.Required {
-			tfSchema[openapiSchema.Required[i]].Required = true
+		converted := &schema.Schema{
+			Type: schema.TypeList,
+			Elem: &schema.Resource{Schema: x},
 		}
-		return
+		setOptionalOrRequired(converted, tags)
+		s[name] = converted
+
+	// If it is a slice we translate the inner element type
+	case types.Slice:
+		x := make(map[string]*schema.Schema)
+		traverse(t.Elem, t.Name.Name, rootName, "", x)
+
+		if t.Elem.Kind == types.Builtin {
+			converted := &schema.Schema{
+				Type: schema.TypeList,
+				Elem: &schema.Schema{Type: schema.TypeString}, //TODO: handle other types of primitive slices
+			}
+			setOptionalOrRequired(converted, tags)
+			s[name] = converted
+			return
+		}
+		s[name] = x[strings.ToLower(t.Name.Name)]
+
+	// If it is a map return map[string]string //TODO: handle complex map structures
+	case types.Map:
+		converted := &schema.Schema{
+			Type: schema.TypeMap,
+			Elem: &schema.Schema{Type: schema.TypeString},
+		}
+
+		setOptionalOrRequired(converted, tags)
+		s[name] = converted
+
+	// Otherwise we cannot traverse anywhere so this finishes the the recursion
+	// If it is a builtin type translate it
+	case types.Builtin:
+		converted := convertBuiltinType(t, tags)
+		s[name] = converted
+
+	default:
+		fmt.Printf("Unknown type %+v", t)
 	}
-	if openapiSchema.Type == nil {
-		return
-	}
-	newSchema := &schema.Schema{}
-	tType := openapiSchema.Type[0]
-	newSchema.Type = mapType(tType)
-	newSchema.Description = openapiSchema.Description
-	tfSchema[name] = newSchema
 }
 
-func mapType(t string) schema.ValueType {
-	switch t {
-	case "object":
-		return schema.TypeMap
-	case array:
-		return schema.TypeList
+func convertBuiltinType(t *types.Type, tags string) *schema.Schema {
+	var schemaType schema.ValueType
+	switch t.Name {
+	case types.String.Name:
+		schemaType = schema.TypeString
+	case types.Int.Name, types.Int32.Name, types.Int64.Name:
+		schemaType = schema.TypeInt
+	case types.Float.Name, types.Float32.Name, types.Float64.Name:
+		schemaType = schema.TypeFloat
+	case types.Bool.Name:
+		schemaType = schema.TypeBool
+
 	}
-	return schema.TypeString
+	converted := &schema.Schema{
+		Type: schemaType,
+	}
+	setOptionalOrRequired(converted, tags)
+	return converted
+}
+
+func setOptionalOrRequired(s *schema.Schema, tags string) {
+	if strings.Contains(tags, "omitempty") {
+		s.Optional = true
+	} else {
+		s.Required = true
+	}
 }
