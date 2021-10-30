@@ -3,7 +3,10 @@
 This repository contains a CLI to
 generate [Terraform schema](https://www.terraform.io/docs/extend/schemas/schema-types.html) out of Go structs.
 
-The generator will convert nested Go structs (at any level) to the equivalent Terraform schema. 
+The generator will convert nested Go structs (at any level) to the equivalent Terraform schema.
+
+The schemas' `Required` or `Optional` property is set based on the json `omitempty` tag.
+If omitempty is set, the property is marked as Optional, else as Required.
 
 ### Known limitations
 
