@@ -25,6 +25,7 @@ func TestMapper(t *testing.T) {
 						{
 							Name: "Model",
 							Type: types.String,
+							Tags: "json:model,omitempty",
 						},
 						{
 							Name: "Year",
@@ -41,7 +42,8 @@ func TestMapper(t *testing.T) {
 				"Car": {
 					"model": {
 						Type:     schema.TypeString,
-						Required: true,
+						Required: false,
+						Optional: true,
 					},
 					"year": {
 						Type:     schema.TypeInt,
