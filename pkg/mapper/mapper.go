@@ -19,8 +19,9 @@ func (m *Mapper) Map(parsedTypes []*types.Type) map[string]map[string]*schema.Sc
 	res := make(map[string]map[string]*schema.Schema)
 	for t := range parsedTypes {
 		s := make(map[string]*schema.Schema)
-		traverse(parsedTypes[t], parsedTypes[t].Name.Name, parsedTypes[t].Name.Name, "", s)
-		res[parsedTypes[t].Name.Name] = s
+		name := parsedTypes[t].Name.Name
+		traverse(parsedTypes[t], name, name, "", s)
+		res[name] = s
 	}
 	return res
 }
@@ -30,7 +31,6 @@ func traverse(t *types.Type, name, rootName, tags string, s map[string]*schema.S
 	rootName = strings.ToLower(rootName)
 	switch t.Kind {
 	// The first cases handles nested structures and translates them recursively
-
 	// If it is a pointer we need to unwrap and recurse
 	case types.Pointer:
 		traverse(t.Elem, name, rootName, "", s)
@@ -62,7 +62,7 @@ func traverse(t *types.Type, name, rootName, tags string, s map[string]*schema.S
 		if t.Elem.Kind == types.Builtin {
 			converted := &schema.Schema{
 				Type: schema.TypeList,
-				Elem: &schema.Schema{Type: schema.TypeString}, //TODO: handle other types of slices
+				Elem: &schema.Schema{Type: schema.TypeString}, //TODO: handle other types of primitive slices
 			}
 			setOptionalOrRequired(converted, tags)
 			s[name] = converted
