@@ -46,7 +46,7 @@ var expectedSchemas = map[string]map[string]*schema.Schema{
 			}},
 		},
 		"make":  &schema.Schema{Type: schema.TypeString, Required: true},
-		"model": &schema.Schema{Type: schema.TypeString, Required: true},
+		"model": &schema.Schema{Type: schema.TypeString, Optional: true},
 	},
 	"GetCylinderSchema": {
 		"number": &schema.Schema{
